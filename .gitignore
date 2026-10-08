@@ -12,3 +12,10 @@ obj/
 *.snupkg
 project.lock.json
 .idea/
+
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
