@@ -20,7 +20,7 @@ public static class PointerSpeed
     {
         speed = Math.Clamp(speed, 1, 20);
         // SPI_SETMOUSESPEED takes the speed in pvParam itself, not a pointer to it.
-        SystemParametersInfoSet(SpiSetMouseSpeed, 0, speed, SpifUpdateIniFile | SpifSendChange);
+        SystemParametersInfoSet(SpiSetMouseSpeed, 0, (nuint)speed, SpifUpdateIniFile | SpifSendChange);
     }
 
     [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
