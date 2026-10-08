@@ -12,16 +12,20 @@ public static class PointerSpeed
     public static int Get()
     {
         int speed = 10;
-        SystemParametersInfo(SpiGetMouseSpeed, 0, ref speed, 0);
+        SystemParametersInfoGet(SpiGetMouseSpeed, 0, ref speed, 0);
         return speed;
     }
 
     public static void Set(int speed)
     {
         speed = Math.Clamp(speed, 1, 20);
-        SystemParametersInfo(SpiSetMouseSpeed, 0, ref speed, SpifUpdateIniFile | SpifSendChange);
+        // SPI_SETMOUSESPEED takes the speed in pvParam itself, not a pointer to it.
+        SystemParametersInfoSet(SpiSetMouseSpeed, 0, speed, SpifUpdateIniFile | SpifSendChange);
     }
 
-    [DllImport("user32.dll", SetLastError = true)]
-    static extern bool SystemParametersInfo(uint action, uint param, ref int value, uint winIni);
+    [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    static extern bool SystemParametersInfoGet(uint action, uint param, ref int value, uint winIni);
+
+    [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
+    static extern bool SystemParametersInfoSet(uint action, uint param, nuint value, uint winIni);
 }
