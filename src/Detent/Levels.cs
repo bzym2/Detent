@@ -2,6 +2,15 @@ namespace Detent;
 
 public sealed record SensitivityLevel(string Name, int PointerSpeed);
 
+public static class LevelLimits
+{
+    public const int MinCount = 2;
+    public const int MaxCount = 9;
+    public const int MinSpeed = 1;
+    public const int MaxSpeed = 20;
+    public const int DirectHotkeyCount = 6;
+}
+
 public static class DefaultLevels
 {
     // Windows pointer speed is 1 through 20. 10 is the system default.

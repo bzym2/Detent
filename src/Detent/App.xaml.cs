@@ -4,7 +4,7 @@ namespace Detent;
 
 public partial class App : Application
 {
-    private Window? _window;
+    private MainWindow? _window;
 
     public App()
     {
@@ -15,5 +15,7 @@ public partial class App : Application
     {
         _window = new MainWindow();
         _window.Activate();
+        _window.HideAtLaunch();
+        Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(_window.HideAtLaunch);
     }
 }

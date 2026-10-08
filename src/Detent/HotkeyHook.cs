@@ -10,18 +10,24 @@ public sealed class HotkeyHook : IDisposable
     const uint ModNoRepeat = 0x4000;
     const uint VkUp = 0x26;
     const uint VkDown = 0x28;
+    const uint VkDigit1 = 0x31;
     const int IdPrevious = 1;
     const int IdNext = 2;
+    const int IdDirectFirst = 3;
 
     readonly IntPtr _hwnd;
+    // Field keeps the subclass delegate alive for the HWND lifetime.
     readonly SubclassProc _proc;
+    readonly bool[] _directOk = new bool[LevelLimits.DirectHotkeyCount];
     bool _subclassed;
+    bool _disposed;
 
     public bool PreviousRegistered { get; }
     public bool NextRegistered { get; }
 
     public event Action? Previous;
     public event Action? Next;
+    public event Action<int>? Jump;
 
     public HotkeyHook(IntPtr hwnd)
     {
@@ -31,12 +37,30 @@ public sealed class HotkeyHook : IDisposable
         var mods = ModControl | ModAlt | ModNoRepeat;
         PreviousRegistered = RegisterHotKey(hwnd, IdPrevious, mods, VkUp);
         NextRegistered = RegisterHotKey(hwnd, IdNext, mods, VkDown);
+        for (var i = 0; i < LevelLimits.DirectHotkeyCount; i++)
+        {
+            _directOk[i] = RegisterHotKey(hwnd, IdDirectFirst + i, mods, VkDigit1 + (uint)i);
+        }
     }
+
+    public bool IsDirectRegistered(int index) =>
+        index >= 0 && index < _directOk.Length && _directOk[index];
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         UnregisterHotKey(_hwnd, IdPrevious);
         UnregisterHotKey(_hwnd, IdNext);
+        for (var i = 0; i < LevelLimits.DirectHotkeyCount; i++)
+        {
+            UnregisterHotKey(_hwnd, IdDirectFirst + i);
+        }
+
         if (_subclassed)
         {
             RemoveWindowSubclass(_hwnd, _proc, 1);
@@ -56,6 +80,10 @@ public sealed class HotkeyHook : IDisposable
             else if (hotkeyId == IdNext)
             {
                 Next?.Invoke();
+            }
+            else if (hotkeyId >= IdDirectFirst && hotkeyId < IdDirectFirst + LevelLimits.DirectHotkeyCount)
+            {
+                Jump?.Invoke(hotkeyId - IdDirectFirst);
             }
         }
 
