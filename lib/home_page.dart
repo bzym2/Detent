@@ -185,31 +185,18 @@ class _TopStatus extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 20, 28, 16),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.asset(
-            'assets/logo.png',
-            width: 56,
-            height: 56,
-            filterQuality: FilterQuality.high,
+          Text(
+            _sectionNames[section],
+            style: theme.textTheme.headlineSmall,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _sectionNames[section],
-                  style: theme.textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '正在使用 $title · 指针速度 $speed',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            '正在使用 $title · 指针速度 $speed',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
