@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
@@ -11,14 +12,20 @@ Future<void> main() async {
   await windowManager.ensureInitialized();
   final controller = DetentController();
   await controller.boot();
+  final preview = Platform.environment['DETENT_PREVIEW'] == '1';
   const options = WindowOptions(
-    size: Size(420, 560),
+    size: Size(440, 640),
     center: true,
     title: 'Detent',
   );
   unawaited(
     windowManager.waitUntilReadyToShow(options, () async {
-      await windowManager.hide();
+      if (preview) {
+        await windowManager.show();
+        await windowManager.focus();
+      } else {
+        await windowManager.hide();
+      }
     }),
   );
   runApp(DetentApp(controller: controller));

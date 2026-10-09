@@ -12,12 +12,22 @@ class DetentApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Detent',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00897B),
-          dynamicSchemeVariant: DynamicSchemeVariant.expressive,
+          brightness: Brightness.light,
         ),
         useMaterial3: true,
+        visualDensity: VisualDensity.standard,
+        listTileTheme: const ListTileThemeData(
+          dense: true,
+          visualDensity: VisualDensity.compact,
+        ),
+        appBarTheme: const AppBarTheme(
+          centerTitle: false,
+          scrolledUnderElevation: 0,
+        ),
       ),
       home: DetentHome(controller: controller),
     );
@@ -37,76 +47,20 @@ class DetentHome extends StatelessWidget {
         final speed = controller.speeds[controller.index];
         final theme = Theme.of(context);
         return Scaffold(
-          body: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          appBar: AppBar(
+            leading: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset(
+                'assets/logo.png',
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Header(index: controller.index, speed: speed),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (var i = 0; i < controller.speeds.length; i++)
-                      _GearChip(
-                        index: i,
-                        speed: controller.speeds[i],
-                        selected: i == controller.index,
-                        onTap: () => controller.applyIndex(i),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '当前档的指针速度',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                    ),
-                    Text('$speed', style: theme.textTheme.titleMedium),
-                  ],
-                ),
-                Slider(
-                  min: 1,
-                  max: 20,
-                  divisions: 19,
-                  value: speed.toDouble(),
-                  onChanged: (value) => controller.setCurrentSpeed(value.round()),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: controller.speeds.length < maxLevelCount
-                            ? controller.addLevel
-                            : null,
-                        child: const Text('添加档位'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: controller.speeds.length > minLevelCount
-                            ? controller.removeCurrentLevel
-                            : null,
-                        child: const Text('删除当前档'),
-                      ),
-                    ),
-                  ],
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('开机启动'),
-                  value: controller.startWithWindows,
-                  onChanged: controller.setStartup,
-                ),
-                const Spacer(),
+                const Text('Detent'),
                 Text(
-                  controller.hotkeyStatus(),
+                  '第 ${controller.index + 1} 档 · 指针速度 $speed',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -114,87 +68,108 @@ class DetentHome extends StatelessWidget {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.index, required this.speed});
-
-  final int index;
-  final int speed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset(
-            'assets/logo.png',
-            width: 40,
-            height: 40,
-            filterQuality: FilterQuality.high,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          body: ListView(
             children: [
-              Text('Detent', style: theme.textTheme.titleLarge),
-              Text(
-                '第 ${index + 1} 档 · 速度 $speed',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              const Divider(height: 1),
+              ListTile(
+                title: Text(
+                  '档位',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
+                subtitle: const Text('选择一档，立刻应用到系统指针速度'),
+              ),
+              for (var i = 0; i < controller.speeds.length; i++)
+                RadioListTile<int>(
+                  value: i,
+                  groupValue: controller.index,
+                  onChanged: (value) {
+                    if (value != null) {
+                      controller.applyIndex(value);
+                    }
+                  },
+                  title: Text('第 ${i + 1} 档'),
+                  secondary: Text(
+                    '${controller.speeds[i]}',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+              const Divider(height: 1),
+              ListTile(
+                title: Text(
+                  '当前档的指针速度',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                trailing: Text(
+                  '$speed',
+                  style: theme.textTheme.headlineSmall,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Slider(
+                  min: 1,
+                  max: 20,
+                  divisions: 19,
+                  label: '$speed',
+                  value: speed.toDouble(),
+                  onChanged: (value) =>
+                      controller.setCurrentSpeed(value.round()),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: OverflowBar(
+                  spacing: 8,
+                  overflowSpacing: 8,
+                  children: [
+                    FilledButton(
+                      onPressed: controller.speeds.length < maxLevelCount
+                          ? controller.addLevel
+                          : null,
+                      child: const Text('添加档位'),
+                    ),
+                    OutlinedButton(
+                      onPressed: controller.speeds.length > minLevelCount
+                          ? controller.removeCurrentLevel
+                          : null,
+                      child: const Text('删除当前档'),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                title: Text(
+                  '启动',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              SwitchListTile(
+                title: const Text('开机启动'),
+                subtitle: const Text('登录 Windows 后自动打开 Detent'),
+                value: controller.startWithWindows,
+                onChanged: controller.setStartup,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                title: Text(
+                  '快捷键',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                subtitle: Text(controller.hotkeyStatus()),
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GearChip extends StatelessWidget {
-  const _GearChip({
-    required this.index,
-    required this.speed,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final int index;
-  final int speed;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ChoiceChip(
-      label: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('第 ${index + 1} 档'),
-          Text(
-            '$speed',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: selected
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-      selected: selected,
-      showCheckmark: false,
-      visualDensity: VisualDensity.compact,
-      onSelected: (_) => onTap(),
+        );
+      },
     );
   }
 }
