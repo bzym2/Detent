@@ -13,8 +13,10 @@ class DetentController extends ChangeNotifier with WindowListener {
   DetentController();
 
   late List<int> speeds;
+  late List<String> labels;
   late int index;
   late bool startWithWindows;
+  late bool alwaysOnTop;
   HotkeyRegistration hotkeys = HotkeyRegistration.failed;
   bool exiting = false;
 
@@ -25,10 +27,13 @@ class DetentController extends ChangeNotifier with WindowListener {
   Future<void> boot() async {
     final loaded = loadSettings();
     speeds = List<int>.of(loaded.speeds);
+    labels = List<String>.of(loaded.labels);
     index = loaded.index;
     startWithWindows = loaded.startWithWindows;
+    alwaysOnTop = loaded.alwaysOnTop;
     setPointerSpeed(speeds[index]);
     setStartupRegistration(startWithWindows);
+    await windowManager.setAlwaysOnTop(alwaysOnTop);
     hotkeys = await listenForHotkeys(_onHotkey);
     _installTray();
     windowManager.addListener(this);
@@ -50,8 +55,10 @@ class DetentController extends ChangeNotifier with WindowListener {
       final menu = Menu.create();
       if (menu != null) {
         _kept.add(menu);
-        final openItem = MenuItem.createWithLabelAndType('打开', MenuItemType.normal);
-        final exitItem = MenuItem.createWithLabelAndType('退出', MenuItemType.normal);
+        final openItem =
+            MenuItem.createWithLabelAndType('打开', MenuItemType.normal);
+        final exitItem =
+            MenuItem.createWithLabelAndType('退出', MenuItemType.normal);
         if (openItem != null) {
           _kept.add(openItem);
           openItem.addListener((event) {
@@ -127,11 +134,23 @@ class DetentController extends ChangeNotifier with WindowListener {
     notifyListeners();
   }
 
+  void setCurrentLabel(String label) {
+    final trimmed = label.trim();
+    final next = trimmed.isEmpty ? '未命名' : trimmed;
+    if (next == labels[index]) {
+      return;
+    }
+    labels[index] = next;
+    _save();
+    notifyListeners();
+  }
+
   void addLevel() {
     if (speeds.length >= maxLevelCount) {
       return;
     }
     speeds.add(10);
+    labels.add('第 ${speeds.length} 档');
     _save();
     notifyListeners();
   }
@@ -141,6 +160,7 @@ class DetentController extends ChangeNotifier with WindowListener {
       return;
     }
     speeds.removeAt(index);
+    labels.removeAt(index);
     if (index >= speeds.length) {
       index = speeds.length - 1;
     }
@@ -157,6 +177,41 @@ class DetentController extends ChangeNotifier with WindowListener {
     setStartupRegistration(enabled);
     _save();
     notifyListeners();
+  }
+
+  Future<void> setAlwaysOnTop(bool enabled) async {
+    if (enabled == alwaysOnTop) {
+      return;
+    }
+    alwaysOnTop = enabled;
+    await windowManager.setAlwaysOnTop(enabled);
+    _save();
+    notifyListeners();
+  }
+
+  void captureSystemSpeed() {
+    setCurrentSpeed(getPointerSpeed());
+  }
+
+  void resetDefaults() {
+    final defaults = createDefaultSettings();
+    speeds = List<int>.of(defaults.speeds);
+    labels = List<String>.of(defaults.labels);
+    index = defaults.index;
+    startWithWindows = defaults.startWithWindows;
+    alwaysOnTop = defaults.alwaysOnTop;
+    setPointerSpeed(speeds[index]);
+    setStartupRegistration(startWithWindows);
+    windowManager.setAlwaysOnTop(alwaysOnTop);
+    _save();
+    notifyListeners();
+  }
+
+  String levelTitle(int i) {
+    if (i < 0 || i >= labels.length) {
+      return '第 ${i + 1} 档';
+    }
+    return labels[i];
   }
 
   String hotkeyStatus() {
@@ -206,6 +261,8 @@ class DetentController extends ChangeNotifier with WindowListener {
         speeds: List<int>.of(speeds),
         index: index,
         startWithWindows: startWithWindows,
+        labels: List<String>.of(labels),
+        alwaysOnTop: alwaysOnTop,
       ),
     );
   }

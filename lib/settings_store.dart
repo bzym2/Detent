@@ -10,18 +10,29 @@ class AppSettings {
     required this.speeds,
     required this.index,
     required this.startWithWindows,
+    required this.labels,
+    required this.alwaysOnTop,
   });
 
   final List<int> speeds;
   final int index;
   final bool startWithWindows;
+  final List<String> labels;
+  final bool alwaysOnTop;
+}
+
+List<String> defaultLabelsFor(int count) {
+  return [for (var i = 0; i < count; i++) '第 ${i + 1} 档'];
 }
 
 AppSettings createDefaultSettings() {
+  final speeds = List<int>.of(defaultSpeeds);
   return AppSettings(
-    speeds: List<int>.of(defaultSpeeds),
+    speeds: speeds,
     index: 0,
     startWithWindows: false,
+    labels: defaultLabelsFor(speeds.length),
+    alwaysOnTop: false,
   );
 }
 
@@ -45,7 +56,9 @@ AppSettings? tryParseSettings(String text) {
     }
     final speeds = <int>[];
     for (final item in speedsRaw) {
-      if (item is! int || item < minPointerSpeedBound || item > maxPointerSpeedBound) {
+      if (item is! int ||
+          item < minPointerSpeedBound ||
+          item > maxPointerSpeedBound) {
         return null;
       }
       speeds.add(item);
@@ -58,10 +71,28 @@ AppSettings? tryParseSettings(String text) {
         decoded['startWithWindows'] is! bool) {
       return null;
     }
+    if (decoded.containsKey('alwaysOnTop') && decoded['alwaysOnTop'] is! bool) {
+      return null;
+    }
+    final labels = <String>[];
+    final labelsRaw = decoded['labels'];
+    if (labelsRaw is List && labelsRaw.length == speeds.length) {
+      for (final item in labelsRaw) {
+        if (item is! String) {
+          return null;
+        }
+        final trimmed = item.trim();
+        labels.add(trimmed.isEmpty ? '未命名' : trimmed);
+      }
+    } else {
+      labels.addAll(defaultLabelsFor(speeds.length));
+    }
     return AppSettings(
       speeds: speeds,
       index: index,
       startWithWindows: decoded['startWithWindows'] == true,
+      labels: labels,
+      alwaysOnTop: decoded['alwaysOnTop'] == true,
     );
   } catch (_) {
     return null;
@@ -97,6 +128,8 @@ void saveSettings(AppSettings settings) {
       'speeds': settings.speeds,
       'index': settings.index,
       'startWithWindows': settings.startWithWindows,
+      'labels': settings.labels,
+      'alwaysOnTop': settings.alwaysOnTop,
     });
     final temp = File('${file.path}.tmp');
     temp.writeAsStringSync('$payload\n', flush: true);

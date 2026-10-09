@@ -14,7 +14,8 @@ Future<void> main() async {
   await controller.boot();
   final preview = Platform.environment['DETENT_PREVIEW'] == '1';
   const options = WindowOptions(
-    size: Size(760, 440),
+    size: Size(900, 520),
+    minimumSize: Size(760, 440),
     center: true,
     title: 'Detent',
   );
