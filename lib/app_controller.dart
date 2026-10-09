@@ -47,7 +47,8 @@ class DetentController extends ChangeNotifier with WindowListener {
         return;
       }
       _tray = tray;
-      _icon = ImageAsset.fromAsset('assets/logo.png');
+      _icon = ImageAsset.fromAsset('assets/logo.ico') ??
+          ImageAsset.fromAsset('assets/logo.png');
       if (_icon != null) {
         tray.icon = _icon;
       }

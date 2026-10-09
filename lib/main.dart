@@ -14,13 +14,18 @@ Future<void> main() async {
   await controller.boot();
   final preview = Platform.environment['DETENT_PREVIEW'] == '1';
   const options = WindowOptions(
-    size: Size(900, 520),
-    minimumSize: Size(760, 440),
+    size: Size(1024, 640),
+    minimumSize: Size(880, 560),
     center: true,
     title: 'Detent',
   );
   unawaited(
     windowManager.waitUntilReadyToShow(options, () async {
+      try {
+        await windowManager.setIcon('assets/logo.ico');
+      } catch (_) {
+        // Runner ICO still covers the executable icon.
+      }
       if (preview) {
         await windowManager.show();
         await windowManager.focus();
